@@ -33,8 +33,8 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.SPI;
-import edu.wpi.first.wpilibj.SerialPort;
+//import edu.wpi.first.wpilibj.SPI;
+//import edu.wpi.first.wpilibj.SerialPort;
 
 import com.ctre.phoenix.sensors.*;
 
@@ -139,31 +139,31 @@ public class Robot extends TimedRobot {
     
   }
   public void controllCall(){
-      if (controller.getRawButton(2)){
+      if (Xbox.getRawButton(2)){
         Flag.set(-1);
  
       }
       else{
         Flag.set(0);
       }
-      if (controller.getRawButton(1)){
+      if (Xbox.getRawButton(1)){
         Winch.set(1);
  
       }
       else{
         Winch.set(0);
       }
-      if (controller.getRawButton(3)){
+      if (Xbox.getRawButton(0)){
         Winch.set(-1);
       }
       else {
  
       }
  
-      if (controller.getRawButton(4)){
+      if (Xbox.getRawButton(4)){
         Flag.set(1);
       }
-      if (controller.getRawButton(8)) {
+      if (Xbox.getRawButton(8)) {
         buttonpressed = 1;
       }
       else {
