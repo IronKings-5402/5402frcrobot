@@ -4,7 +4,27 @@
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
-
+/* 
+xbox controller diagram:
+  Axis: 
+    axis 0: left x axis
+    axis 1: left y axis
+    axis 2: left trigger
+    axis 3: right trigger
+    axis 4: right x axis
+    axis 5: right y axis
+  Buttons:
+    button 0: A
+    button 1: B
+    button 2: X
+    button 3: Y
+    button 4: left button
+    button 5: right button
+    button 6: view button
+    button 7: menu button
+    button 8: left stick click
+    button 9: right stick click
+*/
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -70,59 +90,92 @@ public class Robot extends TimedRobot {
   double kP = 1;
   int buttonpressed = 0;
   public Boolean SensorOn = false;
-  
-  public int irSensorcheck() {
+  // checks ir beams
+  public void irSensorCheck() {
+    // sets irbeam1tripped to 1 and turns off intake 0 if tripped
     if (!virtualirbeam1.get()) {
       irbeam1tripped = 1;
       System.out.println("DIO 1 input detected");
       Intake1.set(0);
-      return 1;
     } 
     else {
 
     }
+    // sets irbeam2tripped to 1 and turns off intake 3 if tripped
     if ((!virtualirbeam2.get()) && (irbeam1tripped == 1)) {
       irbeam2tripped = 1;
       System.out.println("DIO 2 input detected");
       Intake3.set(0);
-      return 2;
     } 
     else {
 
     }
+    // sets irbeam3tripped to 1 and turns off intake 5 if tripped
     if ((!virtualirbeam3.get()) && (irbeam2tripped == 1)) {
       irbeam3tripped = 1;
       System.out.println("DIO 3 input detected");
       Intake5.set(0);
-      return 3;
     } 
     else {
 
     }
+    // sets irbeam4tripped to 1 and turns off intake 4 if tripped
     if ((!virtualirbeam4.get()) && ((irbeam3tripped == 1))) {
       irbeam4tripped = 1;
       System.out.println("DIO 4 input detected");
       Intake4.set(0);
-      return 4;
     } 
     else {
 
     }
+    // sets irbeam5tripped to 1 and turns off intake 2 if tripped
     if ((!virtualirbeam5.get()) && (irbeam4tripped == 1)) {
       irbeam5tripped = 1;
       System.out.println("DIO 5 input detected");
       Intake2.set(0);
-      return 5;
     } 
     else {
-      return 0;
     }
+    
+  }
+  public void controllCall(){
+      if (controller.getRawButton(2)){
+        Flag.set(-1);
+ 
+      }
+      else{
+        Flag.set(0);
+      }
+      if (controller.getRawButton(1)){
+        Winch.set(1);
+ 
+      }
+      else{
+        Winch.set(0);
+      }
+      if (controller.getRawButton(3)){
+        Winch.set(-1);
+      }
+      else {
+ 
+      }
+ 
+      if (controller.getRawButton(4)){
+        Flag.set(1);
+      }
+      if (controller.getRawButton(8)) {
+        buttonpressed = 1;
+      }
+      else {
+ 
+      }
   }
   /**
    * 
    * This function is run when the robot is first started up and should be used
    * for any initialization code.
    */
+
   @Override
   public void robotInit() {
     // Starts USB camera
@@ -212,96 +265,11 @@ public class Robot extends TimedRobot {
      Intake4.set(-0.7);
      Intake5.set(0.7);
 
-     if (controller.getRawButton(2)){
-     Flag.set(-1);
-
-     }
-     else{
-     Flag.set(0);
-     }
-     if (controller.getRawButton(1)){
-     Winch.set(1);
-
-     }
-     else{
-     Winch.set(0);
-     }
-     if (controller.getRawButton(3)){
-     Winch.set(-1);
-     }
-     else {
-
-     }
-
-     if (controller.getRawButton(4)){
-     Flag.set(1);
-     }
-     if (controller.getRawButton(8)) {
-     buttonpressed = 1;
-     }
-     else {
-
-     }
      
-    if (!virtualirbeam1.get()) {
-      irbeam1tripped = 1;
-      System.out.println("DIO 1 input detected");
-      Intake1.set(0);
-    } 
-    else {
+    controllCall(); 
+    irSensorCheck();
 
-    }
-    if ((!virtualirbeam2.get()) && (irbeam1tripped == 1)) {
-      irbeam2tripped = 1;
-      System.out.println("DIO 2 input detected");
-      Intake3.set(0);
-    } 
-    else {
-
-    }
-    if ((!virtualirbeam3.get()) && (irbeam2tripped == 1)) {
-      irbeam3tripped = 1;
-      System.out.println("DIO 3 input detected");
-      Intake5.set(0);
-    } 
-    else {
-
-    }
-    if ((!virtualirbeam4.get()) && ((irbeam3tripped == 1))) {
-      irbeam4tripped = 1;
-      System.out.println("DIO 4 input detected");
-      Intake4.set(0);
-    } 
-    else {
-
-    }
-    if ((!virtualirbeam5.get()) && (irbeam4tripped == 1)) {
-      irbeam5tripped = 1;
-      System.out.println("DIO 5 input detected");
-      Intake2.set(0);
-    } 
-    else {
-
-    }
   }
-
-  // }
-  /*
-   * else { Intake0.set(1); Intake1.set(1); Intake2.set(1); Intake3.set(1);
-   * Intake4.set(1); Intake5.set(1); RightShooter.set(1); LeftShooter.set(1);
-   * buttonpressed = 0; Intake0.set(0); Intake1.set(0); Intake2.set(0);
-   * Intake3.set(0); Intake4.set(0); Intake5.set(0); RightShooter.set(0);
-   * LeftShooter.set(0); }
-   * 
-   * 
-   * 
-   * /*if (controller.getRawButtonPressed(5)){ Intake1.set(0); Intake2.set(0);
-   * Intake3.set(0); Intake4.set(0); Intake5.set(0); irbeam1tripped = 0;
-   * irbeam2tripped = 0; irbeam3tripped = 0; irbeam4tripped = 0; irbeam5tripped =
-   * 0;
-   * 
-   * }
-   */
 
   @Override
   public void testInit() {
