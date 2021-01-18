@@ -345,7 +345,7 @@ public class Robot extends TimedRobot {
       Left.set(0);
       Right.set(0);
     }
-    double k = (200/12)*Math.sqrt(area);
+    double k = 19.338306357420173;
     double dist = k/Math.sqrt(area);
     System.out.println(dist);
   }
