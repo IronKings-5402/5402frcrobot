@@ -4,17 +4,40 @@
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
 /*----------------------------------------------------------------------------*/
-
+/* 
+xbox controller diagram:
+  Axis: 
+    axis 0: left x axis
+    axis 1: left y axis
+    axis 2: left trigger
+    axis 3: right trigger
+    axis 4: right x axis
+    axis 5: right y axis
+  Buttons:
+    button 0: A
+    button 1: B
+    button 2: X
+    button 3: Y
+    button 4: left button
+    button 5: right button
+    button 6: view button
+    button 7: menu button
+    button 8: left stick click
+    button 9: right stick click
+*/
 package frc.robot;
-
+import java.lang.Math;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.VictorSP;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.SPI;
-import edu.wpi.first.wpilibj.SerialPort;
+//import edu.wpi.first.wpilibj.SPI;
+//import edu.wpi.first.wpilibj.SerialPort;
 
 import com.ctre.phoenix.sensors.*;
 
@@ -34,6 +57,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * project.
  */
 public class Robot extends TimedRobot {
+  NetworkTable table = NetworkTableInstance.getDefault().getTable("limelight");
+  NetworkTableEntry tx = table.getEntry("tx");
+  NetworkTableEntry ty = table.getEntry("ty");
+  NetworkTableEntry ta = table.getEntry("ta");
   public int irbeam1tripped = 0;
   public int irbeam2tripped = 0;
   public int irbeam3tripped = 0;
@@ -57,8 +84,8 @@ public class Robot extends TimedRobot {
   private WPI_TalonSRX FrontLeft = new WPI_TalonSRX(0);
   private WPI_TalonSRX BackLeft = new WPI_TalonSRX(2);
   // XBOX controller
-  private GenericHID controller = new Joystick(0);
-  private GenericHID Xbox = new Joystick(1);
+  private GenericHID controller = new Joystick(1);
+  private GenericHID Xbox = new Joystick(0);
   // ir beam sensors
   private DigitalInput virtualirbeam1 = new DigitalInput(0);
   private DigitalInput virtualirbeam2 = new DigitalInput(1);
@@ -70,59 +97,133 @@ public class Robot extends TimedRobot {
   double kP = 1;
   int buttonpressed = 0;
   public Boolean SensorOn = false;
-  
-  public int irSensorcheck() {
+  // checks ir beams
+  public void irSensorCheck() {
+    System.out.println("Sensor check called");
+    // sets irbeam1tripped to 1 and turns off intake 0 if tripped
     if (!virtualirbeam1.get()) {
       irbeam1tripped = 1;
       System.out.println("DIO 1 input detected");
       Intake1.set(0);
-      return 1;
     } 
     else {
 
     }
+    // sets irbeam2tripped to 1 and turns off intake 3 if tripped
     if ((!virtualirbeam2.get()) && (irbeam1tripped == 1)) {
       irbeam2tripped = 1;
       System.out.println("DIO 2 input detected");
       Intake3.set(0);
-      return 2;
     } 
     else {
 
     }
+    // sets irbeam3tripped to 1 and turns off intake 5 if tripped
     if ((!virtualirbeam3.get()) && (irbeam2tripped == 1)) {
       irbeam3tripped = 1;
       System.out.println("DIO 3 input detected");
       Intake5.set(0);
-      return 3;
     } 
     else {
 
     }
+    // sets irbeam4tripped to 1 and turns off intake 4 if tripped
     if ((!virtualirbeam4.get()) && ((irbeam3tripped == 1))) {
       irbeam4tripped = 1;
       System.out.println("DIO 4 input detected");
       Intake4.set(0);
-      return 4;
     } 
     else {
 
     }
+    // sets irbeam5tripped to 1 and turns off intake 2 if tripped
     if ((!virtualirbeam5.get()) && (irbeam4tripped == 1)) {
       irbeam5tripped = 1;
       System.out.println("DIO 5 input detected");
       Intake2.set(0);
-      return 5;
     } 
     else {
-      return 0;
     }
+    
+  }
+  public void controllCall(){
+      System.out.println("Controll function called");
+      if (Xbox.getRawButton(2)){
+        Flag.set(-1);
+ 
+      }
+      else{
+        Flag.set(0);
+      }
+      if (Xbox.getRawButton(1)){
+        Winch.set(1);
+ 
+      }
+      else{
+        Winch.set(0);
+      }
+      if (Xbox.getRawButton(0)){
+        Winch.set(-1);
+      }
+      else {
+ 
+      }
+ 
+      if (Xbox.getRawButton(6)){
+        Flag.set(1);
+      }
+      else {
+ 
+      }
+      if(Xbox.getRawButton(5)){
+        try {
+          System.out.println("wait");
+          LeftShooter.set(-1);
+          RightShooter.set(1);
+          Thread.sleep(4000); 
+      } catch (InterruptedException e) {
+          e.printStackTrace();
+      }
+      
+        irbeam1tripped = 0;
+        irbeam2tripped = 0;
+        irbeam3tripped = 0;
+        irbeam4tripped = 0;
+        irbeam5tripped = 0;
+        Intake1.set(-0.75);
+        Intake2.set(-0.75);
+        Intake3.set(-0.75);
+        Intake4.set(-0.75);
+        Intake5.set(0.75);
+        try {
+          Thread.sleep(4000);
+          LeftShooter.set(0);
+          RightShooter.set(0); 
+      } catch (InterruptedException e) {
+          e.printStackTrace();
+      }
+
+        }
+
+      
+      else{
+
+      }
+      if (Xbox.getRawButton(5)){
+        LeftShooter.set(-1);
+        RightShooter.set(1);
+      }
+      else{
+        LeftShooter.set(0);
+        RightShooter.set(0);
+      }
   }
   /**
    * 
    * This function is run when the robot is first started up and should be used
    * for any initialization code.
    */
+
   @Override
   public void robotInit() {
     // Starts USB camera
@@ -132,18 +233,16 @@ public class Robot extends TimedRobot {
     irbeam3tripped = 0;
     irbeam4tripped = 0;
     irbeam5tripped = 0;
-
+    System.out.println("robot intitiated");
   }
 
   @Override
   public void robotPeriodic() {
-    SmartDashboard.putNumber("Gyro sensor", Gyro.getAngle());
     /// sending the data to been seen
     // SmartDashboard.putNumber("Left Drive Encoder Value",
     // LeftMaster.getSelectedSensorPosition());// * kDriveTick2Feet);
     // SmartDashboard.putNumber("Right Drive Encoder Value",
     // RightMaster.getSelectedSensorPosition());// * kDriveTick2Fee
-    SmartDashboard.putBoolean("Button1", SensorOn);
   }
 
   @Override
@@ -186,11 +285,11 @@ public class Robot extends TimedRobot {
     irbeam3tripped = 0;
     irbeam4tripped = 0;
     irbeam5tripped = 0;
-    Intake1.set(-0.5);
-    Intake2.set(-0.5);
-    Intake3.set(-0.5);
-    Intake4.set(-0.5);
-    Intake5.set(0.5);
+    Intake1.set(-0.75);
+    Intake2.set(-0.75);
+    Intake3.set(-0.75);
+    Intake4.set(-0.75);
+    Intake5.set(0.75);
     LeftShooter.set(0);
     RightShooter.set(0);
     buttonpressed = 0;
@@ -203,105 +302,17 @@ public class Robot extends TimedRobot {
     Scheduler.getInstance().run();
     SpeedControllerGroup Left = new SpeedControllerGroup(FrontLeft, BackLeft);
     SpeedControllerGroup Right = new SpeedControllerGroup(FrontRight, BackRight);
-    double left = controller.getRawAxis(1) * -0.6;
+    double left = -Xbox.getRawAxis(1);
+    
 
-    double right = -Xbox.getRawAxis(5) * 0.6;
-     Intake1.set(-0.7);
-     Intake2.set(-0.7);
-     Intake3.set(-0.7);
-     Intake4.set(-0.7);
-     Intake5.set(0.7);
-
-     if (controller.getRawButton(2)){
-     Flag.set(-1);
-
-     }
-     else{
-     Flag.set(0);
-     }
-     if (controller.getRawButton(1)){
-     Winch.set(1);
-
-     }
-     else{
-     Winch.set(0);
-     }
-     if (controller.getRawButton(3)){
-     Winch.set(-1);
-     }
-     else {
-
-     }
-
-     if (controller.getRawButton(4)){
-     Flag.set(1);
-     }
-     if (controller.getRawButton(8)) {
-     buttonpressed = 1;
-     }
-     else {
-
-     }
+    double right = Xbox.getRawAxis(5);
+    Left.set(left);
+    Right.set(right);
      
-    if (!virtualirbeam1.get()) {
-      irbeam1tripped = 1;
-      System.out.println("DIO 1 input detected");
-      Intake1.set(0);
-    } 
-    else {
+    controllCall(); 
+    irSensorCheck();
 
-    }
-    if ((!virtualirbeam2.get()) && (irbeam1tripped == 1)) {
-      irbeam2tripped = 1;
-      System.out.println("DIO 2 input detected");
-      Intake3.set(0);
-    } 
-    else {
-
-    }
-    if ((!virtualirbeam3.get()) && (irbeam2tripped == 1)) {
-      irbeam3tripped = 1;
-      System.out.println("DIO 3 input detected");
-      Intake5.set(0);
-    } 
-    else {
-
-    }
-    if ((!virtualirbeam4.get()) && ((irbeam3tripped == 1))) {
-      irbeam4tripped = 1;
-      System.out.println("DIO 4 input detected");
-      Intake4.set(0);
-    } 
-    else {
-
-    }
-    if ((!virtualirbeam5.get()) && (irbeam4tripped == 1)) {
-      irbeam5tripped = 1;
-      System.out.println("DIO 5 input detected");
-      Intake2.set(0);
-    } 
-    else {
-
-    }
   }
-
-  // }
-  /*
-   * else { Intake0.set(1); Intake1.set(1); Intake2.set(1); Intake3.set(1);
-   * Intake4.set(1); Intake5.set(1); RightShooter.set(1); LeftShooter.set(1);
-   * buttonpressed = 0; Intake0.set(0); Intake1.set(0); Intake2.set(0);
-   * Intake3.set(0); Intake4.set(0); Intake5.set(0); RightShooter.set(0);
-   * LeftShooter.set(0); }
-   * 
-   * 
-   * 
-   * /*if (controller.getRawButtonPressed(5)){ Intake1.set(0); Intake2.set(0);
-   * Intake3.set(0); Intake4.set(0); Intake5.set(0); irbeam1tripped = 0;
-   * irbeam2tripped = 0; irbeam3tripped = 0; irbeam4tripped = 0; irbeam5tripped =
-   * 0;
-   * 
-   * }
-   */
 
   @Override
   public void testInit() {
@@ -309,8 +320,34 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testPeriodic() {
-    
-
+    SpeedControllerGroup Left = new SpeedControllerGroup(FrontLeft, BackLeft);
+    SpeedControllerGroup Right = new SpeedControllerGroup(FrontRight, BackRight);
+    double x = tx.getDouble(0.0);
+    double y = ty.getDouble(0.0);
+    double area = ta.getDouble(0.0);
+    SmartDashboard.putNumber("LimelightX", x);
+    SmartDashboard.putNumber("LimelightY", y);
+    if (Xbox.getRawButton(1)){
+      if (x > 4) {
+        Left.set(.2);
+        Right.set(.2);
+      }
+      else if (x < -4) {
+        Left.set(-.2);
+        Right.set(-.2);
+      }
+      else {
+        Left.set(0);
+        Right.set(0);
+      }
+    }
+    else {
+      Left.set(0);
+      Right.set(0);
+    }
+    double k = (200/12)*Math.sqrt(area);
+    double dist = k/Math.sqrt(area);
+    System.out.println(dist);
   }
   
 }
