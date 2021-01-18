@@ -97,6 +97,8 @@ public class Robot extends TimedRobot {
   double kP = 1;
   int buttonpressed = 0;
   public Boolean SensorOn = false;
+  SpeedControllerGroup Left = new SpeedControllerGroup(FrontLeft, BackLeft);
+  SpeedControllerGroup Right = new SpeedControllerGroup(FrontRight, BackRight);
   // checks ir beams
   public void irSensorCheck() {
     System.out.println("Sensor check called");
@@ -148,26 +150,28 @@ public class Robot extends TimedRobot {
   }
   public void controllCall(){
       System.out.println("Controll function called");
-      if (Xbox.getRawButton(2)){
-        Flag.set(-1);
- 
-      }
-      else{
-        Flag.set(0);
-      }
+      double x = tx.getDouble(0.0);
+      double y = ty.getDouble(0.0);
+      double area = ta.getDouble(0.0);
       if (Xbox.getRawButton(1)){
-        Winch.set(1);
- 
-      }
-      else{
-        Winch.set(0);
-      }
-      if (Xbox.getRawButton(0)){
-        Winch.set(-1);
+        if (x > 4) {
+          Left.set(.2);
+          Right.set(.2);
+        }
+        else if (x < -4) {
+          Left.set(-.2);
+          Right.set(-.2);
+        }
+        else {
+          Left.set(0);
+          Right.set(0);
+        }
       }
       else {
- 
+        Left.set(0);
+        Right.set(0);
       }
+    
  
       if (Xbox.getRawButton(6)){
         Flag.set(1);
@@ -233,7 +237,13 @@ public class Robot extends TimedRobot {
     irbeam3tripped = 0;
     irbeam4tripped = 0;
     irbeam5tripped = 0;
+    double x = tx.getDouble(0.0);
+    double y = ty.getDouble(0.0);
+    double area = ta.getDouble(0.0);
     System.out.println("robot intitiated");
+    SmartDashboard.putNumber("LimelightX", x);
+    SmartDashboard.putNumber("LimelightY", y);
+    
   }
 
   @Override
@@ -299,9 +309,11 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
+    double x = tx.getDouble(0.0);
+    double y = ty.getDouble(0.0);
+    double area = ta.getDouble(0.0);
     Scheduler.getInstance().run();
-    SpeedControllerGroup Left = new SpeedControllerGroup(FrontLeft, BackLeft);
-    SpeedControllerGroup Right = new SpeedControllerGroup(FrontRight, BackRight);
+    
     double left = -Xbox.getRawAxis(1);
     
 
@@ -311,7 +323,8 @@ public class Robot extends TimedRobot {
      
     controllCall(); 
     irSensorCheck();
-
+    SmartDashboard.putNumber("LimelightX", x);
+    SmartDashboard.putNumber("LimelightY", y);
   }
 
   @Override
@@ -320,13 +333,9 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testPeriodic() {
-    SpeedControllerGroup Left = new SpeedControllerGroup(FrontLeft, BackLeft);
-    SpeedControllerGroup Right = new SpeedControllerGroup(FrontRight, BackRight);
     double x = tx.getDouble(0.0);
     double y = ty.getDouble(0.0);
     double area = ta.getDouble(0.0);
-    SmartDashboard.putNumber("LimelightX", x);
-    SmartDashboard.putNumber("LimelightY", y);
     if (Xbox.getRawButton(1)){
       if (x > 4) {
         Left.set(.2);
