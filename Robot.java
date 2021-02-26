@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------*/
-/* Copyright (c) 2018 FIRST. All Rights Reserved.                             */
+/* Copyright (c) 2017-2018 FIRST. All Rights Reserved.                        */
 /* Open Source Software - may be modified and shared by FRC teams. The code   */
 /* must be accompanied by the FIRST BSD license file in the root directory of */
 /* the project.                                                               */
@@ -8,24 +8,13 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.VictorSP;
-import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.SPI;
-import edu.wpi.first.wpilibj.SerialPort;
-
-import com.ctre.phoenix.sensors.*;
-
-//import org.graalvm.compiler.phases.schedule.SchedulePhase;
-import com.analog.adis16470.frc.ADIS16470_IMU;
-import com.ctre.phoenix.motorcontrol.can.*;
-import edu.wpi.first.wpilibj.SpeedControllerGroup;
-import edu.wpi.first.cameraserver.CameraServer;
-import edu.wpi.first.wpilibj.DigitalInput;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
+import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.can.TalonFX;
+import edu.wpi.first.networktables.NetworkTable;
+import edu.wpi.first.networktables.NetworkTableEntry;
+import edu.wpi.first.networktables.NetworkTableInstance;
 /**
  * The VM is configured to automatically run this class, and to call the
  * functions corresponding to each mode, as described in the TimedRobot
@@ -34,284 +23,162 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * project.
  */
 public class Robot extends TimedRobot {
-  public int irbeam1tripped = 0;
-  public int irbeam2tripped = 0;
-  public int irbeam3tripped = 0;
-  public int irbeam4tripped = 0;
-  public int irbeam5tripped = 0;
-  // motors
-
-  private WPI_VictorSPX Intake3 = new WPI_VictorSPX(3);
-  private WPI_VictorSPX Intake2 = new WPI_VictorSPX(2);
-  private WPI_VictorSPX Intake4 = new WPI_VictorSPX(4);
-  private VictorSP Intake1 = new VictorSP(2);
-  private VictorSP Intake5 = new VictorSP(4);
-  private WPI_TalonSRX RightShooter = new WPI_TalonSRX(1);
-  private VictorSP LeftShooter = new VictorSP(5);
-  private VictorSP Flag = new VictorSP(0);
-  private WPI_VictorSPX Intake0 = new WPI_VictorSPX(0);
-  private VictorSP Winch = new VictorSP(6);
-  // Drive
-  private WPI_TalonSRX FrontRight = new WPI_TalonSRX(3);
-  private WPI_TalonSRX BackRight = new WPI_TalonSRX(5);
-  private WPI_TalonSRX FrontLeft = new WPI_TalonSRX(0);
-  private WPI_TalonSRX BackLeft = new WPI_TalonSRX(2);
-  // XBOX controller
-  private GenericHID controller = new Joystick(0);
-  private GenericHID Xbox = new Joystick(1);
-  // ir beam sensors
-  private DigitalInput virtualirbeam1 = new DigitalInput(0);
-  private DigitalInput virtualirbeam2 = new DigitalInput(1);
-  private DigitalInput virtualirbeam3 = new DigitalInput(2);
-  private DigitalInput virtualirbeam4 = new DigitalInput(3);
-  private DigitalInput virtualirbeam5 = new DigitalInput(4);
-  private DigitalInput Roller = new DigitalInput(5);
-  private final ADIS16470_IMU Gyro = new ADIS16470_IMU();
-  double kP = 1;
-  int buttonpressed = 0;
-  public Boolean SensorOn = false;
+  NetworkTableInstance inst = NetworkTableInstance.getDefault();
+  NetworkTable table = inst.getTable("limelight");
+  NetworkTableEntry tx = table.getEntry("tx");
+  NetworkTableEntry ty = table.getEntry("ty");
+  NetworkTableEntry ta = table.getEntry("ta");
+  NetworkTableEntry tv = table.getEntry("tv");
+  NetworkTableEntry pipeline = table.getEntry("pipeline");
   
-  public int irSensorcheck() {
-    if (!virtualirbeam1.get()) {
-      irbeam1tripped = 1;
-      System.out.println("DIO 1 input detected");
-      Intake1.set(0);
-      return 1;
-    } 
-    else {
-
-    }
-    if ((!virtualirbeam2.get()) && (irbeam1tripped == 1)) {
-      irbeam2tripped = 1;
-      System.out.println("DIO 2 input detected");
-      Intake3.set(0);
-      return 2;
-    } 
-    else {
-
-    }
-    if ((!virtualirbeam3.get()) && (irbeam2tripped == 1)) {
-      irbeam3tripped = 1;
-      System.out.println("DIO 3 input detected");
-      Intake5.set(0);
-      return 3;
-    } 
-    else {
-
-    }
-    if ((!virtualirbeam4.get()) && ((irbeam3tripped == 1))) {
-      irbeam4tripped = 1;
-      System.out.println("DIO 4 input detected");
-      Intake4.set(0);
-      return 4;
-    } 
-    else {
-
-    }
-    if ((!virtualirbeam5.get()) && (irbeam4tripped == 1)) {
-      irbeam5tripped = 1;
-      System.out.println("DIO 5 input detected");
-      Intake2.set(0);
-      return 5;
-    } 
-    else {
+  // Talon FX controller
+  private TalonFX LeftFrontWheel = new TalonFX(3);
+  private TalonFX LeftBackWheel = new TalonFX(0);
+  private TalonFX RightFrontWheel = new TalonFX(1);
+  private TalonFX RightBackWheel = new TalonFX(2);
+  // xbox controller
+  private GenericHID Xbox = new Joystick(0);
+  // no speedControllerGroups so I made my own function 
+  public void setMotors(double left, double right) {
+    LeftBackWheel.set(ControlMode.PercentOutput, left);
+    LeftFrontWheel.set(ControlMode.PercentOutput, left);
+    RightBackWheel.set(ControlMode.PercentOutput, right);
+    RightFrontWheel.set(ControlMode.PercentOutput, right);
+  }
+  // deadband function. Takes Controller Value in doouble data type and deadband ammount in double datatype as values
+  public double applydeadband(double ControllerValue, double DeadBandAmmount) {
+    // if controller value is greater than or equal to negative dead band ammount 
+    //and controllerValue is less than or equal to deadband ammount then return 0
+    if (ControllerValue >= -DeadBandAmmount && ControllerValue <= DeadBandAmmount) {
       return 0;
+    }
+    // else return contoller value
+    else { 
+      return ControllerValue;
+    }
+  }
+  // Mecanum function.  Takes string as value
+  public void Mecanum(String direction){
+    // if direction is left mecanum left
+    if (direction == "left"){
+      LeftFrontWheel.set(ControlMode.PercentOutput, -.25);
+      LeftBackWheel.set(ControlMode.PercentOutput, .25);
+      RightFrontWheel.set(ControlMode.PercentOutput, -.25);
+      RightBackWheel.set(ControlMode.PercentOutput, .25);
+    }
+    // if direction is right mecanum right
+    else if (direction == "right"){
+      LeftFrontWheel.set(ControlMode.PercentOutput, .25);
+      LeftBackWheel.set(ControlMode.PercentOutput, -.25);
+      RightFrontWheel.set(ControlMode.PercentOutput, .25);
+      RightBackWheel.set(ControlMode.PercentOutput, -.25);
     }
   }
   /**
-   * 
-   * This function is run when the robot is first started up and should be used
-   * for any initialization code.
+   * This function is run when the robot is first started up and should be
+   * used for any initialization code.
    */
   @Override
   public void robotInit() {
-    // Starts USB camera
-    CameraServer.getInstance().startAutomaticCapture();
-    irbeam1tripped = 0;
-    irbeam2tripped = 0;
-    irbeam3tripped = 0;
-    irbeam4tripped = 0;
-    irbeam5tripped = 0;
-
+    // Calls set function. Sets all motors to 0]
+    // stops motors
+    setMotors(0, 0);
+    pipeline.setNumber(1);
+    
   }
 
+  /**
+   * This function is called every robot packet, no matter the mode. Use
+   * this for items like diagnostics that you want ran during disabled,
+   * autonomous, teleoperated and test.
+   *
+   * <p>This runs after the mode specific periodic functions, but before
+   * LiveWindow and SmartDashboard integrated updating.
+   */
   @Override
   public void robotPeriodic() {
-    SmartDashboard.putNumber("Gyro sensor", Gyro.getAngle());
-    /// sending the data to been seen
-    // SmartDashboard.putNumber("Left Drive Encoder Value",
-    // LeftMaster.getSelectedSensorPosition());// * kDriveTick2Feet);
-    // SmartDashboard.putNumber("Right Drive Encoder Value",
-    // RightMaster.getSelectedSensorPosition());// * kDriveTick2Fee
-    SmartDashboard.putBoolean("Button1", SensorOn);
   }
 
+  /**
+   * This autonomous (along with the chooser code above) shows how to select
+   * between different autonomous modes using the dashboard. The sendable
+   * chooser code works with the Java SmartDashboard. If you prefer the
+   * LabVIEW Dashboard, remove all of the chooser code and uncomment the
+   * getString line to get the auto name from the text box below the Gyro
+   *
+   * <p>You can add additional auto modes by adding additional comparisons to
+   * the switch structure below with additional strings. If using the
+   * SendableChooser make sure to add them to the chooser code above as well.
+   */
   @Override
   public void autonomousInit() {
+    pipeline.setNumber(1);
 
-    /*
-     * while (Gyro.getAngle() != 0) { if (Gyro.getAngle() > 0){ FrontLeft.set(1);
-     * BackLeft.set(1); FrontRight.set(-1); BackLeft.set(-1); } else if
-     * (Gyro.getAngle() < 0) { FrontLeft.set(-1); BackLeft.set(-1);
-     * FrontRight.set(1); BackLeft.set(1); } else { FrontLeft.set(0);
-     * BackLeft.set(0); FrontRight.set(0); BackLeft.set(0); } FrontLeft.set(0);
-     * BackLeft.set(0); FrontRight.set(0); BackLeft.set(0);
-     * 
-     * }
-     */
-
+    
   }
 
+  /**
+   * This function is called periodically during autonomous.
+   */
   @Override
   public void autonomousPeriodic() {
-
-    /*
-     * double error = -Gyro.getRate();
-     * 
-     * 
-     * FrontLeft.set(.5 + kP * error); BackLeft.set(.5 + kP * error);
-     * FrontRight.set(.5 - kP * error); BackRight.set(.5 - kP * error);
-     * SmartDashboard.putNumber("Right Side", .5 - kP * error);
-     * SmartDashboard.putNumber("Left Side", .5 + kP * error);
-     * SmartDashboard.putNumber("Gyro Rate", Gyro.getRate());
-     * SmartDashboard.putNumber("Gyro Angle", Gyro.getAngle());
-     */
-
+    double x = tx.getDouble(0.0);
+    System.out.println("X Value: " + String.valueOf(x));
+    double area = ta.getDouble(0.0);
+    double y = ty.getDouble(0.0);
+    double target = tv.getDouble(0.0);
+    System.out.println("Percent of image: " + String.valueOf(area));
+    double distance = (9.5-17.51)/(Math.tan(Math.toRadians(179)+ Math.toRadians(y)));
+    System.out.println("Distance: " + String.valueOf(distance));
+    
+    if (target == 1 & area < 20) {
+      if (x > 2.5){
+        setMotors(x*.04, x*.05/3.5);
+      }
+      else if (x < -2.5){
+        setMotors(Math.abs(x)*.05/3.5, x*.04);
+      }
+      else if (x >= -2.5 & x <= 2.5){
+        setMotors(.25, -.25);
+      }
+    }
+    else {
+      setMotors(0, 0);
+    }
   }
-
+  /**
+   * This function is called periodically during operator control.
+   */
   @Override
   public void teleopInit() {
-    irbeam1tripped = 0;
-    irbeam2tripped = 0;
-    irbeam3tripped = 0;
-    irbeam4tripped = 0;
-    irbeam5tripped = 0;
-    Intake1.set(-0.5);
-    Intake2.set(-0.5);
-    Intake3.set(-0.5);
-    Intake4.set(-0.5);
-    Intake5.set(0.5);
-    LeftShooter.set(0);
-    RightShooter.set(0);
-    buttonpressed = 0;
-    final Boolean SensorOn = false;
-    // public SensorOn.booleanValue();
+    
   }
-
   @Override
   public void teleopPeriodic() {
-    Scheduler.getInstance().run();
-    SpeedControllerGroup Left = new SpeedControllerGroup(FrontLeft, BackLeft);
-    SpeedControllerGroup Right = new SpeedControllerGroup(FrontRight, BackRight);
-    double left = controller.getRawAxis(1) * -0.6;
-
-    double right = -Xbox.getRawAxis(5) * 0.6;
-     Intake1.set(-0.7);
-     Intake2.set(-0.7);
-     Intake3.set(-0.7);
-     Intake4.set(-0.7);
-     Intake5.set(0.7);
-
-     if (controller.getRawButton(2)){
-     Flag.set(-1);
-
-     }
-     else{
-     Flag.set(0);
-     }
-     if (controller.getRawButton(1)){
-     Winch.set(1);
-
-     }
-     else{
-     Winch.set(0);
-     }
-     if (controller.getRawButton(3)){
-     Winch.set(-1);
-     }
-     else {
-
-     }
-
-     if (controller.getRawButton(4)){
-     Flag.set(1);
-     }
-     if (controller.getRawButton(8)) {
-     buttonpressed = 1;
-     }
-     else {
-
-     }
-     
-    if (!virtualirbeam1.get()) {
-      irbeam1tripped = 1;
-      System.out.println("DIO 1 input detected");
-      Intake1.set(0);
-    } 
-    else {
-
+    // Gets values from xbox controller
+    // Stick values equal apply deadband with Controller axis for first argument and deadband ammount for second argument. 
+    double LeftStick = applydeadband(-Xbox.getRawAxis(1), 0.07);
+    double RightStick = applydeadband(Xbox.getRawAxis(5), 0.07);
+    // if left dpad is pressed do mecaum function with left as argument
+    if (Xbox.getPOV() == 270) {
+      Mecanum("left");
     }
-    if ((!virtualirbeam2.get()) && (irbeam1tripped == 1)) {
-      irbeam2tripped = 1;
-      System.out.println("DIO 2 input detected");
-      Intake3.set(0);
-    } 
-    else {
-
+    // if right dpad is pressed Do mecnum function with right as value
+    else if (Xbox.getPOV() == 90) {
+      Mecanum("right");
     }
-    if ((!virtualirbeam3.get()) && (irbeam2tripped == 1)) {
-      irbeam3tripped = 1;
-      System.out.println("DIO 3 input detected");
-      Intake5.set(0);
-    } 
+    // else set motors to stick values
     else {
-
-    }
-    if ((!virtualirbeam4.get()) && ((irbeam3tripped == 1))) {
-      irbeam4tripped = 1;
-      System.out.println("DIO 4 input detected");
-      Intake4.set(0);
-    } 
-    else {
-
-    }
-    if ((!virtualirbeam5.get()) && (irbeam4tripped == 1)) {
-      irbeam5tripped = 1;
-      System.out.println("DIO 5 input detected");
-      Intake2.set(0);
-    } 
-    else {
-
+      setMotors(LeftStick, RightStick);
     }
   }
 
-  // }
-  /*
-   * else { Intake0.set(1); Intake1.set(1); Intake2.set(1); Intake3.set(1);
-   * Intake4.set(1); Intake5.set(1); RightShooter.set(1); LeftShooter.set(1);
-   * buttonpressed = 0; Intake0.set(0); Intake1.set(0); Intake2.set(0);
-   * Intake3.set(0); Intake4.set(0); Intake5.set(0); RightShooter.set(0);
-   * LeftShooter.set(0); }
-   * 
-   * 
-   * 
-   * /*if (controller.getRawButtonPressed(5)){ Intake1.set(0); Intake2.set(0);
-   * Intake3.set(0); Intake4.set(0); Intake5.set(0); irbeam1tripped = 0;
-   * irbeam2tripped = 0; irbeam3tripped = 0; irbeam4tripped = 0; irbeam5tripped =
-   * 0;
-   * 
-   * }
+  /**
+   * This function is called periodically during test mode.
    */
-
-  @Override
-  public void testInit() {
-  }
-
   @Override
   public void testPeriodic() {
-    
-
+    // testing area
+    System.out.println(Xbox.getRawAxis(5));
   }
-  
 }
-
